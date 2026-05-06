@@ -194,6 +194,178 @@
     });
 
     // ==========================================
+    // Event Modal
+    // ==========================================
+
+    const eventModal = document.getElementById('eventModal');
+    const modalClose = document.getElementById('modalClose');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalDate = document.getElementById('modalDate');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalGallery = document.getElementById('modalGallery');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const modalHeaderImg = document.getElementById('modalHeaderImg');
+
+    function openModal(card) {
+        const date = card.querySelector('.event-card__date').cloneNode(true);
+        const title = card.querySelector('h3').cloneNode(true);
+        const description = card.querySelector('.event-card__description-full').cloneNode(true);
+        const galleryPath = card.dataset.gallery;
+        const thumbPath = card.dataset.thumb;
+
+        modalDate.innerHTML = '';
+        modalDate.appendChild(date);
+        
+        modalTitle.innerHTML = '';
+        modalTitle.appendChild(title);
+        
+        modalBody.innerHTML = '';
+        modalBody.appendChild(description);
+
+        // Load Thumbnail
+        modalHeaderImg.innerHTML = '';
+        if (thumbPath) {
+            const thumbImg = document.createElement('img');
+            thumbImg.src = encodeURI(thumbPath);
+            thumbImg.alt = 'Event thumbnail';
+            thumbImg.style.cursor = 'pointer';
+            
+            // Allow clicking thumbnail to open in lightbox
+            thumbImg.addEventListener('click', () => {
+                const prevGallery = [...currentGalleryImages];
+                currentGalleryImages = [encodeURI(thumbPath)];
+                openLightbox(0);
+                // Restore gallery when lightbox closes (handled by listener)
+                lightbox.addEventListener('click', () => { currentGalleryImages = prevGallery; }, { once: true });
+            });
+
+            modalHeaderImg.appendChild(thumbImg);
+            modalHeaderImg.style.display = 'block';
+        } else {
+            modalHeaderImg.style.display = 'none';
+        }
+
+        // Reset and Load Gallery
+        loadGallery(card);
+
+        eventModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    async function loadGallery(card) {
+        const path = card.dataset.gallery;
+        const imagesAttr = card.dataset.galleryImages;
+        
+        if (!path || !imagesAttr) {
+            modalGallery.style.display = 'none';
+            return;
+        }
+
+        // Parse images list (comma-separated)
+        const images = imagesAttr.split(',').map(img => img.trim()).filter(img => img !== '');
+        let foundAny = false;
+        
+        galleryGrid.innerHTML = '';
+        currentGalleryImages = [];
+
+        images.forEach((imgName, index) => {
+            const imgSrc = encodeURI(`${path}${imgName}`);
+            currentGalleryImages.push(imgSrc);
+
+            const item = document.createElement('div');
+            item.className = 'gallery__item';
+            item.innerHTML = `<img src="${imgSrc}" class="gallery__img" loading="lazy" alt="Event photo">`;
+            
+            item.addEventListener('click', () => openLightbox(index));
+            
+            galleryGrid.appendChild(item);
+            foundAny = true;
+        });
+
+        modalGallery.style.display = foundAny ? 'block' : 'none';
+    }
+
+    function checkImageExists(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
+    }
+
+    function closeModal() {
+        eventModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.event-card__more').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.event-card');
+            openModal(card);
+        });
+    });
+
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
+
+    // ==========================================
+    // Lightbox
+    // ==========================================
+
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxClose = document.getElementById('lightboxClose');
+    const lightboxPrev = document.getElementById('lightboxPrev');
+    const lightboxNext = document.getElementById('lightboxNext');
+    let currentGalleryImages = [];
+    let currentImageIndex = 0;
+
+    function openLightbox(index) {
+        currentImageIndex = index;
+        lightboxImg.src = currentGalleryImages[currentImageIndex];
+        
+        // Show navigation only if there's more than one image
+        const hasMultiple = currentGalleryImages.length > 1;
+        lightboxPrev.style.display = hasMultiple ? 'flex' : 'none';
+        lightboxNext.style.display = hasMultiple ? 'flex' : 'none';
+        
+        lightbox.classList.add('open');
+    }
+
+    function closeLightbox() {
+        lightbox.classList.remove('open');
+        setTimeout(() => { lightboxImg.src = ''; }, 300);
+    }
+
+    function showNext() {
+        currentImageIndex = (currentImageIndex + 1) % currentGalleryImages.length;
+        lightboxImg.src = currentGalleryImages[currentImageIndex];
+    }
+
+    function showPrev() {
+        currentImageIndex = (currentImageIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+        lightboxImg.src = currentGalleryImages[currentImageIndex];
+    }
+
+    lightboxClose.addEventListener('click', closeLightbox);
+    lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+    lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+    lightbox.addEventListener('click', closeLightbox);
+
+    // Keyboard navigation for both Modal and Lightbox
+    document.addEventListener('keydown', (e) => {
+        if (lightbox.classList.contains('open')) {
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowRight') showNext();
+            if (e.key === 'ArrowLeft') showPrev();
+        } else if (eventModal.classList.contains('open')) {
+            if (e.key === 'Escape') closeModal();
+        }
+    });
+
+    // ==========================================
     // Contact form (basic)
     // ==========================================
 
