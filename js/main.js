@@ -166,34 +166,247 @@
     });
 
     // ==========================================
-    // Events filter
+    // Events - Load and render dynamically
     // ==========================================
 
+    // NOTE: fetch() calls to local files will fail when opening via file://
+    // Use a local dev server (e.g., python -m http.server, VS Code Live Server) during development
+    // This is not an issue once deployed to a real web host
+
+    const eventsContainer = document.querySelector('.events__grid');
     const filters = document.querySelectorAll('.events__filter');
-    const eventCards = document.querySelectorAll('.event-card');
+    let allEvents = [];
 
-    filters.forEach(filter => {
-        filter.addEventListener('click', () => {
-            const target = filter.dataset.filter;
+    // Month names for display
+    const monthNames = {
+        gr: ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'],
+        en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    };
 
-            filters.forEach(f => f.classList.remove('active'));
-            filter.classList.add('active');
+    // Helper to get current language
+    function getCurrentLang() {
+        return document.body.classList.contains('lang-en') ? 'en' : 'gr';
+    }
 
-            eventCards.forEach(card => {
-                const year = card.dataset.year;
-                const show = target === 'all' || year === target;
-                card.classList.toggle('hidden', !show);
+    // Helper to create date display HTML
+    function createDateHTML(event) {
+        const date = new Date(event.date);
+        const day = date.getDate();
+        const monthIndex = date.getMonth();
+        const year = date.getFullYear();
+        
+        return `
+            <div class="event-card__date">
+                <span class="event-card__day">${day}</span>
+                <span class="event-card__month">
+                    <span data-lang="gr">${monthNames.gr[monthIndex]}</span>
+                    <span data-lang="en">${monthNames.en[monthIndex]}</span>
+                </span>
+                <span class="event-card__year">${year}</span>
+            </div>
+        `;
+    }
 
-                // Re-trigger animation
-                if (show) {
-                    card.classList.remove('visible');
-                    setTimeout(() => card.classList.add('visible'), 50);
+    // Helper to create location HTML
+    function createLocationHTML(event) {
+        if (!event.location && !event.mapsUrl) return '';
+        
+        const locationText = event.location ? `
+            <span data-lang="gr">${event.location.gr || ''}</span>
+            <span data-lang="en">${event.location.en || ''}</span>
+        ` : 'Koufalia, Thessaloniki';
+        
+        const mapsUrl = event.mapsUrl || 'https://maps.google.com/?q=Koufalia,+Thessaloniki,+Greece';
+        
+        return `
+            <a href="${mapsUrl}" target="_blank" rel="noopener" class="event-card__location">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${locationText}
+            </a>
+        `;
+    }
+
+    // Helper to determine if event is upcoming
+    function isUpcoming(event) {
+        const eventDate = new Date(event.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return eventDate >= today;
+    }
+
+    // Render a single event card
+    function renderEventCard(event) {
+        const isUpcomingEvent = isUpcoming(event);
+        const yearDisplay = isUpcomingEvent ? 'upcoming' : event.year;
+        
+        // Build gallery data attributes - use the full event path which includes year folder
+        const eventBasePath = `assets/events/${event.path}`;
+        const galleryPath = event.gallery && event.gallery.length > 0 
+            ? `${eventBasePath}/gallery/` 
+            : null;
+        const galleryImages = event.gallery ? event.gallery.map(img => img.replace('gallery/', '')).join(', ') : '';
+        const thumbPath = event.thumb ? `${eventBasePath}/${event.thumb}` : null;
+        
+        // Description container
+        const descHtml = event.descriptionHtml ? `
+            <div class="event-card__description-full">
+                ${event.descriptionHtml}
+            </div>
+        ` : '';
+        
+        // Upcoming tag
+        const upcomingTag = isUpcomingEvent ? `
+            <span class="event-card__tag upcoming">
+                <span data-lang="gr">Επερχόμενη</span>
+                <span data-lang="en">Upcoming</span>
+            </span>
+        ` : '';
+        
+        const cardHtml = `
+            <div class="event-card reveal" 
+                 data-year="${yearDisplay}" 
+                 data-gallery="${galleryPath || ''}" 
+                 data-gallery-images="${galleryImages}" 
+                 data-thumb="${thumbPath || ''}"
+                 data-event-id="${event.id}">
+                ${createDateHTML(event)}
+                <div class="event-card__info">
+                    ${upcomingTag}
+                    <h3>
+                        <span data-lang="gr">${event.title.gr}</span>
+                        <span data-lang="en">${event.title.en}</span>
+                    </h3>
+                    ${createLocationHTML(event)}
+                    ${descHtml}
+                    <div class="event-card__more">
+                        <span data-lang="gr">Διαβάστε περισσότερα</span>
+                        <span data-lang="en">Read more</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return cardHtml;
+    }
+
+    // Load all events from JSON files
+    async function loadEvents() {
+        try {
+            // Fetch the index of event paths
+            const indexResponse = await fetch('assets/events/index.json');
+            if (!indexResponse.ok) {
+                console.error('Failed to load events index:', indexResponse.status);
+                return;
+            }
+            const eventPaths = await indexResponse.json();
+            
+            // Load each event's JSON and description HTML
+            const events = [];
+            for (const path of eventPaths) {
+                try {
+                    // Fetch event metadata
+                    const eventResponse = await fetch(`assets/events/${path}/event.json`);
+                    if (!eventResponse.ok) {
+                        console.error(`Failed to load event at ${path}:`, eventResponse.status);
+                        continue;
+                    }
+                    const eventData = await eventResponse.json();
+                    
+                    // Fetch description HTML
+                    let descriptionHtml = '';
+                    if (eventData.descriptionFile) {
+                        const descResponse = await fetch(`assets/events/${path}/${eventData.descriptionFile}`);
+                        if (descResponse.ok) {
+                            descriptionHtml = await descResponse.text();
+                        }
+                    }
+                    
+                    // Combine into full event object
+                    events.push({
+                        id: eventData.id,
+                        path: path,
+                        title: eventData.title,
+                        date: eventData.date,
+                        year: eventData.year,
+                        thumb: eventData.thumb,
+                        gallery: eventData.gallery || [],
+                        descriptionHtml: descriptionHtml,
+                        location: eventData.location,
+                        mapsUrl: eventData.mapsUrl
+                    });
+                } catch (error) {
+                    console.error(`Error loading event ${path}:`, error);
                 }
+            }
+            
+            // Sort by date descending (most recent first)
+            events.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            allEvents = events;
+            renderEvents(events);
+            setupEventListeners();
+            
+        } catch (error) {
+            console.error('Failed to load events:', error);
+        }
+    }
+
+    // Render all event cards
+    function renderEvents(events) {
+        if (!eventsContainer) return;
+        
+        eventsContainer.innerHTML = '';
+        
+        events.forEach(event => {
+            const cardHtml = renderEventCard(event);
+            eventsContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+        
+        // Re-apply reveal animations
+        const newCards = eventsContainer.querySelectorAll('.event-card');
+        newCards.forEach(card => {
+            revealObserver.observe(card);
+        });
+    }
+
+    // Set up event listeners after rendering
+    function setupEventListeners() {
+        // Filter functionality
+        filters.forEach(filter => {
+            filter.addEventListener('click', () => {
+                const target = filter.dataset.filter;
+                
+                filters.forEach(f => f.classList.remove('active'));
+                filter.classList.add('active');
+                
+                const eventCards = document.querySelectorAll('.event-card');
+                eventCards.forEach(card => {
+                    const year = card.dataset.year;
+                    const show = target === 'all' || year === target;
+                    card.classList.toggle('hidden', !show);
+                    
+                    // Re-trigger animation
+                    if (show) {
+                        card.classList.remove('visible');
+                        setTimeout(() => card.classList.add('visible'), 50);
+                    }
+                });
             });
         });
-    });
+        
+        // Modal open functionality - using event delegation
+        eventsContainer.addEventListener('click', (e) => {
+            const moreBtn = e.target.closest('.event-card__more');
+            if (moreBtn) {
+                const card = moreBtn.closest('.event-card');
+                if (card) {
+                    openModal(card);
+                }
+            }
+        });
+    }
 
-    // ==========================================
     // Event Modal
     // ==========================================
 
@@ -208,25 +421,38 @@
     const modalHeaderImg = document.getElementById('modalHeaderImg');
 
     function openModal(card) {
-        const date = card.querySelector('.event-card__date').cloneNode(true);
-        const title = card.querySelector('h3').cloneNode(true);
-        const description = card.querySelector('.event-card__description-full').cloneNode(true);
-        const galleryPath = card.dataset.gallery;
-        const thumbPath = card.dataset.thumb;
+        // Get event ID from data attribute
+        const eventId = card.dataset.eventId;
+        const event = allEvents.find(e => e.id === eventId);
+        
+        if (!event) {
+            console.error('Event not found:', eventId);
+            return;
+        }
 
-        modalDate.innerHTML = '';
-        modalDate.appendChild(date);
+        // Create date HTML
+        const date = new Date(event.date);
+        const day = date.getDate();
+        const monthIndex = date.getMonth();
+        const year = date.getFullYear();
+        const lang = getCurrentLang();
+        const monthName = lang === 'en' ? monthNames.en[monthIndex] : monthNames.gr[monthIndex];
         
-        modalTitle.innerHTML = '';
-        modalTitle.appendChild(title);
+        const dateHtml = `
+            <span class="event-card__day">${day}</span>
+            <span class="event-card__month">${monthName}</span>
+            <span class="event-card__year">${year}</span>
+        `;
         
-        modalBody.innerHTML = '';
-        modalBody.appendChild(description);
+        modalDate.innerHTML = dateHtml;
+        modalTitle.innerHTML = lang === 'en' ? event.title.en : event.title.gr;
+        modalBody.innerHTML = event.descriptionHtml || '';
 
         // Load Thumbnail
         modalHeaderImg.innerHTML = '';
-        if (thumbPath) {
+        if (event.thumb) {
             const thumbImg = document.createElement('img');
+            const thumbPath = `assets/events/${event.path}/${event.thumb}`;
             thumbImg.src = encodeURI(thumbPath);
             thumbImg.alt = 'Event thumbnail';
             thumbImg.style.cursor = 'pointer';
@@ -246,31 +472,27 @@
             modalHeaderImg.style.display = 'none';
         }
 
-        // Reset and Load Gallery
-        loadGallery(card);
+        // Load Gallery
+        loadGalleryFromEvent(event);
 
         eventModal.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
 
-    async function loadGallery(card) {
-        const path = card.dataset.gallery;
-        const imagesAttr = card.dataset.galleryImages;
-        
-        if (!path || !imagesAttr) {
+    function loadGalleryFromEvent(event) {
+        if (!event.gallery || event.gallery.length === 0) {
             modalGallery.style.display = 'none';
             return;
         }
-
-        // Parse images list (comma-separated)
-        const images = imagesAttr.split(',').map(img => img.trim()).filter(img => img !== '');
+        
+        const galleryPath = `assets/events/${event.path}/`;
         let foundAny = false;
         
         galleryGrid.innerHTML = '';
         currentGalleryImages = [];
 
-        images.forEach((imgName, index) => {
-            const imgSrc = encodeURI(`${path}${imgName}`);
+        event.gallery.forEach((imgPath, index) => {
+            const imgSrc = encodeURI(`${galleryPath}${imgPath}`);
             currentGalleryImages.push(imgSrc);
 
             const item = document.createElement('div');
@@ -285,6 +507,14 @@
 
         modalGallery.style.display = foundAny ? 'block' : 'none';
     }
+
+    function closeModal() {
+        eventModal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
 
     function checkImageExists(url) {
         return new Promise((resolve) => {
@@ -555,6 +785,15 @@
             const newSize = Math.min(newWidth, 420);
             globe.width(newSize).height(newSize);
         });
+    }
+
+    // ==========================================
+    // Initialize Events
+    // ==========================================
+    // Load events when DOM is ready
+    // Note: For local development, use a local server (file:// won't work with fetch)
+    if (eventsContainer) {
+        loadEvents();
     }
 
 })();
