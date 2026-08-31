@@ -177,6 +177,14 @@
     const filters = document.querySelectorAll('.events__filter');
     let allEvents = [];
 
+    // Pagination constants
+    const INITIAL_EVENTS_COUNT = 5;
+    const EVENTS_PER_LOAD = 5;
+
+    // Pagination state
+    let visibleEventsCount = INITIAL_EVENTS_COUNT;
+    let currentFilter = 'all';
+
     // Month names for display
     const monthNames = {
         gr: ['Ιαν', 'Φεβ', 'Μαρ', 'Απρ', 'Μάι', 'Ιουν', 'Ιουλ', 'Αυγ', 'Σεπ', 'Οκτ', 'Νοε', 'Δεκ'],
@@ -234,10 +242,82 @@
         return eventDate >= today;
     }
 
+    // Get the year display value for an event (used for filtering)
+    function getEventYearDisplay(event) {
+        return isUpcoming(event) ? 'upcoming' : String(event.year);
+    }
+
+    // Get filtered events based on current filter
+    function getFilteredEvents(filter) {
+        return allEvents.filter(event => {
+            if (filter === 'all') return true;
+            if (filter === 'upcoming') return isUpcoming(event);
+            // For year filters, match against the year display value
+            return getEventYearDisplay(event) === filter;
+        });
+    }
+
+    // Update pagination button visibility
+    function updatePaginationButtons() {
+        const filteredEvents = getFilteredEvents(currentFilter);
+        const showMoreBtn = document.getElementById('showMoreEvents');
+        const showLessBtn = document.getElementById('showLessEvents');
+
+        if (!showMoreBtn || !showLessBtn) return;
+
+        const totalEvents = filteredEvents.length;
+
+        // Rule: If 5 or fewer events total, show neither button
+        if (totalEvents <= INITIAL_EVENTS_COUNT) {
+            showMoreBtn.style.display = 'none';
+            showLessBtn.style.display = 'none';
+            return;
+        }
+
+        // Rule: Show "Show More" if visible count < total
+        if (visibleEventsCount < totalEvents) {
+            showMoreBtn.style.display = 'flex';
+        } else {
+            showMoreBtn.style.display = 'none';
+        }
+
+        // Rule: Show "Show Less" if visible count > initial count
+        if (visibleEventsCount > INITIAL_EVENTS_COUNT) {
+            showLessBtn.style.display = 'flex';
+        } else {
+            showLessBtn.style.display = 'none';
+        }
+    }
+
+    // Render visible events with pagination
+    function renderVisibleEvents() {
+        const filteredEvents = getFilteredEvents(currentFilter);
+        const visibleEvents = filteredEvents.slice(0, visibleEventsCount);
+
+        // Clear and re-render only the visible slice
+        if (!eventsContainer) return;
+
+        eventsContainer.innerHTML = '';
+
+        visibleEvents.forEach(event => {
+            const cardHtml = renderEventCard(event);
+            eventsContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        // Re-apply reveal animations
+        const newCards = eventsContainer.querySelectorAll('.event-card');
+        newCards.forEach(card => {
+            revealObserver.observe(card);
+        });
+
+        // Update button visibility
+        updatePaginationButtons();
+    }
+
     // Render a single event card
     function renderEventCard(event) {
         const isUpcomingEvent = isUpcoming(event);
-        const yearDisplay = isUpcomingEvent ? 'upcoming' : event.year;
+        const yearDisplay = isUpcomingEvent ? 'upcoming' : String(event.year);
         
         // Build gallery data attributes - use the full event path which includes year folder
         const eventBasePath = `assets/events/${event.path}`;
@@ -344,30 +424,14 @@
             events.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             allEvents = events;
-            renderEvents(events);
+            currentFilter = 'all';
+            visibleEventsCount = INITIAL_EVENTS_COUNT;
+            renderVisibleEvents();
             setupEventListeners();
             
         } catch (error) {
             console.error('Failed to load events:', error);
         }
-    }
-
-    // Render all event cards
-    function renderEvents(events) {
-        if (!eventsContainer) return;
-        
-        eventsContainer.innerHTML = '';
-        
-        events.forEach(event => {
-            const cardHtml = renderEventCard(event);
-            eventsContainer.insertAdjacentHTML('beforeend', cardHtml);
-        });
-        
-        // Re-apply reveal animations
-        const newCards = eventsContainer.querySelectorAll('.event-card');
-        newCards.forEach(card => {
-            revealObserver.observe(card);
-        });
     }
 
     // Set up event listeners after rendering
@@ -377,21 +441,16 @@
             filter.addEventListener('click', () => {
                 const target = filter.dataset.filter;
                 
+                // Update active filter state
                 filters.forEach(f => f.classList.remove('active'));
                 filter.classList.add('active');
                 
-                const eventCards = document.querySelectorAll('.event-card');
-                eventCards.forEach(card => {
-                    const year = card.dataset.year;
-                    const show = target === 'all' || year === target;
-                    card.classList.toggle('hidden', !show);
-                    
-                    // Re-trigger animation
-                    if (show) {
-                        card.classList.remove('visible');
-                        setTimeout(() => card.classList.add('visible'), 50);
-                    }
-                });
+                // Reset pagination when filter changes
+                currentFilter = target;
+                visibleEventsCount = INITIAL_EVENTS_COUNT;
+                
+                // Re-render with new filter
+                renderVisibleEvents();
             });
         });
         
@@ -405,6 +464,36 @@
                 }
             }
         });
+
+        // Show More button
+        const showMoreBtn = document.getElementById('showMoreEvents');
+        if (showMoreBtn) {
+            showMoreBtn.addEventListener('click', () => {
+                const filteredEvents = getFilteredEvents(currentFilter);
+                visibleEventsCount = Math.min(
+                    visibleEventsCount + EVENTS_PER_LOAD,
+                    filteredEvents.length
+                );
+                renderVisibleEvents();
+            });
+        }
+
+        // Show Less button
+        const showLessBtn = document.getElementById('showLessEvents');
+        if (showLessBtn) {
+            showLessBtn.addEventListener('click', () => {
+                visibleEventsCount = INITIAL_EVENTS_COUNT;
+                renderVisibleEvents();
+
+                // Optional: scroll to top of events section
+                const eventsSection = document.getElementById('events');
+                if (eventsSection) {
+                    const offset = nav.offsetHeight + 20;
+                    const top = eventsSection.getBoundingClientRect().top + window.scrollY - offset;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                }
+            });
+        }
     }
 
     // Event Modal
@@ -524,21 +613,6 @@
             img.src = url;
         });
     }
-
-    function closeModal() {
-        eventModal.classList.remove('open');
-        document.body.style.overflow = '';
-    }
-
-    document.querySelectorAll('.event-card__more').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const card = btn.closest('.event-card');
-            openModal(card);
-        });
-    });
-
-    modalClose.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', closeModal);
 
     // ==========================================
     // Lightbox

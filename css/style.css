@@ -1689,6 +1689,32 @@ body:not(.lang-en) .modal__body [data-lang="gr"] {
     padding: 0.6rem 1.5rem;
 }
 
+.btn--secondary {
+    background: transparent;
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+.btn--secondary:hover {
+    background: var(--color-bg-alt);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* ============================================
+   Events Pagination
+   ============================================ */
+
+.events__pagination {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+}
+
+.events__pagination .btn {
+    flex: 0 0 auto;
+}
+
 /* ============================================
    Footer
    ============================================ */
