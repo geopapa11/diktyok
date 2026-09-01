@@ -1295,6 +1295,13 @@ body:not(.lang-en) .modal__body [data-lang="gr"] {
     margin-bottom: var(--space-md);
 }
 
+.modal__body ul,
+.modal__body ol,
+.modal__body li {
+    font-size: 1rem;
+    color: var(--color-text-light);
+}
+
 /* Gallery Styles */
 .modal__gallery {
     margin-top: var(--space-xl);
