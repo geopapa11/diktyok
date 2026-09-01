@@ -1698,14 +1698,14 @@ body:not(.lang-en) .modal__body [data-lang="gr"] {
 
 .btn--secondary {
     background: transparent;
-    border-color: var(--color-border);
-    color: var(--color-text);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 .btn--secondary:hover {
-    background: var(--color-bg-alt);
+    background: var(--color-primary);
     border-color: var(--color-primary);
-    color: var(--color-primary);
+    color: var(--color-white);
 }
 
 /* ============================================
