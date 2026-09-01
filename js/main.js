@@ -504,6 +504,7 @@
     const eventModal = document.getElementById('eventModal');
     const modalClose = document.getElementById('modalClose');
     const modalOverlay = document.getElementById('modalOverlay');
+    const modalContainer = document.querySelector('.modal__container');
     const modalDate = document.getElementById('modalDate');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -512,6 +513,9 @@
     const modalHeaderImg = document.getElementById('modalHeaderImg');
 
     function openModal(card) {
+        // Reset scroll position to top
+        modalContainer.scrollTop = 0;
+
         // Get event ID from data attribute
         const eventId = card.dataset.eventId;
         const event = allEvents.find(e => e.id === eventId);
