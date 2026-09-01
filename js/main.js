@@ -606,6 +606,13 @@
         document.body.style.overflow = 'hidden';
     }
 
+    // Helper to set object-position for portrait images
+    function applyPortraitObjectPosition(img) {
+        if (img.naturalHeight > img.naturalWidth) {
+            img.style.objectPosition = 'center 20%';
+        }
+    }
+
     function loadGalleryFromEvent(event) {
         if (!event.gallery || event.gallery.length === 0) {
             modalGallery.style.display = 'none';
@@ -624,7 +631,21 @@
 
             const item = document.createElement('div');
             item.className = 'gallery__item';
-            item.innerHTML = `<img src="${imgSrc}" class="gallery__img" loading="lazy" alt="Event photo">`;
+
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.className = 'gallery__img';
+            img.loading = 'lazy';
+            img.alt = 'Event photo';
+
+            // Handle cached images (complete before load listener attached)
+            if (img.complete) {
+                applyPortraitObjectPosition(img);
+            } else {
+                img.addEventListener('load', () => applyPortraitObjectPosition(img));
+            }
+
+            item.appendChild(img);
             
             item.addEventListener('click', () => openLightbox(index));
             
