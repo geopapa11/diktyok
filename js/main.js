@@ -381,29 +381,33 @@
             }
             const eventPaths = await indexResponse.json();
             
-            // Load each event's JSON and description HTML
-            const events = [];
-            for (const path of eventPaths) {
+            // Fetch all event.json files in parallel
+            const eventPromises = eventPaths.map(async (path) => {
                 try {
-                    // Fetch event metadata
                     const eventResponse = await fetch(`assets/events/${path}/event.json`);
                     if (!eventResponse.ok) {
                         console.error(`Failed to load event at ${path}:`, eventResponse.status);
-                        continue;
+                        return null;
                     }
                     const eventData = await eventResponse.json();
-                    
-                    // Fetch description HTML
-                    let descriptionHtml = '';
-                    if (eventData.descriptionFile) {
-                        const descResponse = await fetch(`assets/events/${path}/${eventData.descriptionFile}`);
-                        if (descResponse.ok) {
-                            descriptionHtml = await descResponse.text();
-                        }
-                    }
-                    
-                    // Combine into full event object
-                    events.push({
+                    return {
+                        path: path,
+                        eventData: eventData
+                    };
+                } catch (error) {
+                    console.error(`Error loading event ${path}:`, error);
+                    return null;
+                }
+            });
+            
+            const eventResults = await Promise.all(eventPromises);
+            
+            // Filter out nulls (failed fetches) and build events array
+            const events = eventResults
+                .filter(result => result !== null)
+                .map(result => {
+                    const { path, eventData } = result;
+                    return {
                         id: eventData.id,
                         path: path,
                         title: eventData.title,
@@ -411,14 +415,12 @@
                         year: eventData.year,
                         thumb: eventData.thumb,
                         gallery: eventData.gallery || [],
-                        descriptionHtml: descriptionHtml,
+                        descriptionHtml: null, // Will be loaded on demand
+                        descriptionFile: eventData.descriptionFile,
                         location: eventData.location,
                         mapsUrl: eventData.mapsUrl
-                    });
-                } catch (error) {
-                    console.error(`Error loading event ${path}:`, error);
-                }
-            }
+                    };
+                });
             
             // Sort by date descending (most recent first)
             events.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -535,7 +537,43 @@
         
         modalDate.innerHTML = dateHtml;
         modalTitle.innerHTML = lang === 'en' ? event.title.en : event.title.gr;
-        modalBody.innerHTML = event.descriptionHtml || '';
+        
+        // Set loading state for description
+        modalBody.innerHTML = `
+            <p>
+                <span data-lang="gr">Φόρτωση περιγραφής...</span>
+                <span data-lang="en">Loading description...</span>
+            </p>
+        `;
+
+        // Load description on demand if not already cached
+        async function loadDescription() {
+            if (event.descriptionHtml) {
+                modalBody.innerHTML = event.descriptionHtml;
+                return;
+            }
+            
+            if (!event.descriptionFile) {
+                modalBody.innerHTML = '';
+                return;
+            }
+            
+            try {
+                const descResponse = await fetch(`assets/events/${event.path}/${event.descriptionFile}`);
+                if (descResponse.ok) {
+                    event.descriptionHtml = await descResponse.text();
+                    modalBody.innerHTML = event.descriptionHtml;
+                } else {
+                    console.error(`Failed to load description for ${event.id}:`, descResponse.status);
+                    modalBody.innerHTML = '';
+                }
+            } catch (error) {
+                console.error(`Error loading description for ${event.id}:`, error);
+                modalBody.innerHTML = '';
+            }
+        }
+        
+        loadDescription();
 
         // Load Thumbnail
         modalHeaderImg.innerHTML = '';
