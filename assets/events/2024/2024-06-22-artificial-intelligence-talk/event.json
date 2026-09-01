@@ -1,0 +1,21 @@
+{ "id": "2024-06-22-artificial-intelligence-talk",
+  "title": {
+    "gr": "Είναι η Τεχνητή Νοημοσύνη η 5η Βιομηχανική Επανάσταση;",
+    "en": "Is Artificial Intelligence the 5th Industrial Revolution?"
+  },
+  "date": "2024-06-22",
+  "year": 2024,
+  "thumb": "thumb/thumb.jpg",
+  "descriptionFile": "description.html",
+  "gallery": [
+    "gallery/449031257_359925050449892_8295495893693214846_n.jpg",
+    "gallery/477363208_516638041445258_2577945513492022848_n.jpg",
+    "gallery/477784228_516635181445544_5917169427008871084_n.jpg",
+    "gallery/476668022_516635228112206_1330494507881583461_n.jpg"
+  ],
+  "location": {
+    "gr": "Κουφάλια, Θεσσαλονίκη",
+    "en": "Koufalia, Thessaloniki"
+  },
+  "mapsUrl": "https://maps.google.com/?q=Koufalia,+Thessaloniki,+Greece"
+}
