@@ -613,6 +613,12 @@
         }
     }
 
+    // Helper to handle gallery image load (fade-in + remove skeleton)
+    function handleGalleryImageLoad(item, img) {
+        applyPortraitObjectPosition(img);
+        item.classList.remove('gallery__item--loading');
+    }
+
     function loadGalleryFromEvent(event) {
         if (!event.gallery || event.gallery.length === 0) {
             modalGallery.style.display = 'none';
@@ -630,7 +636,7 @@
             currentGalleryImages.push(imgSrc);
 
             const item = document.createElement('div');
-            item.className = 'gallery__item';
+            item.className = 'gallery__item gallery__item--loading';
 
             const img = document.createElement('img');
             img.src = imgSrc;
@@ -640,9 +646,9 @@
 
             // Handle cached images (complete before load listener attached)
             if (img.complete) {
-                applyPortraitObjectPosition(img);
+                handleGalleryImageLoad(item, img);
             } else {
-                img.addEventListener('load', () => applyPortraitObjectPosition(img));
+                img.addEventListener('load', () => handleGalleryImageLoad(item, img));
             }
 
             item.appendChild(img);
@@ -682,34 +688,85 @@
     const lightboxClose = document.getElementById('lightboxClose');
     const lightboxPrev = document.getElementById('lightboxPrev');
     const lightboxNext = document.getElementById('lightboxNext');
+    const lightboxSpinner = document.getElementById('lightboxSpinner');
     let currentGalleryImages = [];
     let currentImageIndex = 0;
 
+    // Helper to preload adjacent images
+    function preloadAdjacentImages() {
+        if (currentGalleryImages.length <= 1) return;
+        const prevIndex = (currentImageIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
+        const nextIndex = (currentImageIndex + 1) % currentGalleryImages.length;
+        new Image().src = currentGalleryImages[prevIndex];
+        new Image().src = currentGalleryImages[nextIndex];
+    }
+
+    // Helper to load lightbox image with spinner
+    function loadLightboxImage(src) {
+        // Show spinner
+        lightboxSpinner.style.display = 'block';
+        lightboxImg.classList.remove('lightbox__img--loaded');
+        
+        // Check if image is already cached and is the same source
+        if (lightboxImg.complete && lightboxImg.src === src) {
+            lightboxSpinner.style.display = 'none';
+            lightboxImg.classList.add('lightbox__img--loaded');
+            return;
+        }
+        
+        // Remove any existing onload handler to avoid duplicates
+        lightboxImg.onload = null;
+        
+        lightboxImg.src = src;
+        
+        const onLoad = () => {
+            lightboxSpinner.style.display = 'none';
+            lightboxImg.classList.add('lightbox__img--loaded');
+        };
+        
+        if (lightboxImg.complete) {
+            onLoad();
+        } else {
+            lightboxImg.onload = onLoad;
+        }
+    }
+
     function openLightbox(index) {
         currentImageIndex = index;
-        lightboxImg.src = currentGalleryImages[currentImageIndex];
         
         // Show navigation only if there's more than one image
         const hasMultiple = currentGalleryImages.length > 1;
         lightboxPrev.style.display = hasMultiple ? 'flex' : 'none';
         lightboxNext.style.display = hasMultiple ? 'flex' : 'none';
         
+        // Load the image with spinner
+        loadLightboxImage(currentGalleryImages[currentImageIndex]);
+        
+        // Preload adjacent images
+        preloadAdjacentImages();
+        
         lightbox.classList.add('open');
     }
 
     function closeLightbox() {
         lightbox.classList.remove('open');
-        setTimeout(() => { lightboxImg.src = ''; }, 300);
+        lightboxSpinner.style.display = 'none';
+        setTimeout(() => { 
+            lightboxImg.src = '';
+            lightboxImg.classList.remove('lightbox__img--loaded');
+        }, 300);
     }
 
     function showNext() {
         currentImageIndex = (currentImageIndex + 1) % currentGalleryImages.length;
-        lightboxImg.src = currentGalleryImages[currentImageIndex];
+        loadLightboxImage(currentGalleryImages[currentImageIndex]);
+        preloadAdjacentImages();
     }
 
     function showPrev() {
         currentImageIndex = (currentImageIndex - 1 + currentGalleryImages.length) % currentGalleryImages.length;
-        lightboxImg.src = currentGalleryImages[currentImageIndex];
+        loadLightboxImage(currentGalleryImages[currentImageIndex]);
+        preloadAdjacentImages();
     }
 
     lightboxClose.addEventListener('click', closeLightbox);
