@@ -1,0 +1,31 @@
+{
+  "id": "2026-04-03-career-day",
+  "title": {
+    "gr": "2η Ετήσια Ημερίδα Σταδιοδρομίας",
+    "en": "2nd Annual Career Day"
+  },
+  "date": "2026-04-03",
+  "year": 2026,
+  "thumb": "thumb/thumb.png",
+  "descriptionFile": "description.html",
+  "gallery": [
+    "gallery/20260403_084230.jpg",
+    "gallery/20260403_092538.jpg",
+    "gallery/20260403_105137.jpg",
+    "gallery/DSC_1328.JPG",
+    "gallery/DSC_1381.JPG",
+    "gallery/DSC_1384.JPG",
+    "gallery/DSC_1405_A.JPG",
+    "gallery/DSC_1443.JPG",
+    "gallery/DSC_1570.JPG",
+    "gallery/DSC_1573.JPG",
+    "gallery/DSC_1579.JPG",
+    "gallery/DSC_1580.JPG",
+    "gallery/DSC_1591.JPG"
+  ],
+  "location": {
+    "gr": "1ο ΓΕΛ Κουφαλίων",
+    "en": "1st General High School of Koufalia"
+  },
+  "mapsUrl": "https://maps.app.goo.gl/Q4o8XKCMugMysBTK7"
+}

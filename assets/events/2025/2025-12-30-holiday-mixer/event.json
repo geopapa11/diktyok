@@ -1,0 +1,25 @@
+{
+  "id": "2025-12-30-holiday-mixer",
+  "title": {
+    "gr": "2η Χριστουγεννιάτικη Γιορτή Γνωριμίας & Διασύνδεσης",
+    "en": "2nd Holiday Meet & Greet Mixer"
+  },
+  "date": "2025-12-30",
+  "year": 2025,
+  "thumb": "thumb/thumb.png",
+  "descriptionFile": "description.html",
+  "gallery": [
+    "gallery/610642692_17925142047206645_2454605017625835334_n.jpg",
+    "gallery/610644026_17925142038206645_7670038931169288128_n.jpg",
+    "gallery/610699129_17925142131206645_1707777975361466923_n.jpg",
+    "gallery/610753574_17925142110206645_3532170697614370030_n.jpg",
+    "gallery/610806686_17925142101206645_5356541695052777459_n.jpg",
+    "gallery/611210861_17925142119206645_2035027391930373127_n.jpg",
+    "gallery/611337891_17925142074206645_2531562333768772430_n.jpg"
+  ],
+  "location": {
+    "gr": "Πεζόδρομος Κουφαλίων",
+    "en": "Pedestrian Street, Koufalia"
+  },
+  "mapsUrl": "https://maps.app.goo.gl/nqyfCqJ9ybSo9mKz9"
+}

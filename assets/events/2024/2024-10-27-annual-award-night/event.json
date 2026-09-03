@@ -1,0 +1,36 @@
+{ "id": "2024-10-27-annual-award-night",
+  "title": {
+    "gr": "1η Ετήσια Βραδιά Επιβράβευσης",
+    "en": "1st Annual Award Night"
+  },
+  "date": "2024-10-27",
+  "year": 2024,
+  "thumb": "thumb/thumb.jpg",
+  "descriptionFile": "description.html",
+  "gallery": [
+    "gallery/award_1.png",
+    "gallery/award_2.png",
+    "gallery/award_3.png",
+    "gallery/award_4.png",
+    "gallery/gidaris_fokas.jpg",
+    "gallery/lena.png",
+    "gallery/darra.png",
+    "gallery/papachris1.png",
+    "gallery/piano.jpg",
+    "gallery/Unknown-2.jpg",
+    "gallery/mayor.png",
+    "gallery/Unknown-3.jpg",
+    "gallery/Unknown-4.jpg",
+    "gallery/Unknown-6.jpg",
+    "gallery/Unknown-7.jpg",
+    "gallery/Unknown-8.jpg",
+    "gallery/darra2.png",
+    "gallery/darra3.png",
+    "gallery/papachris2.png"
+  ],
+  "location": {
+    "gr": "Πεζόδρομος Κουφαλίων",
+    "en": "Pedestrian Street, Koufalia"
+  },
+  "mapsUrl": "https://maps.app.goo.gl/VmjsRXTsELC9ADFn9"
+}

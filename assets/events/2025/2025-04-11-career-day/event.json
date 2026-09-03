@@ -1,0 +1,30 @@
+{
+  "id": "2025-04-11-career-day",
+  "title": {
+    "gr": "1η Ετήσια Ημερίδα Σταδιοδρομίας",
+    "en": "1st Annual Career Day"
+  },
+  "date": "2025-04-11",
+  "year": 2025,
+  "thumb": "thumb/thumb.png",
+  "descriptionFile": "description.html",
+  "gallery": [
+    "gallery/20250411_105301.jpg",
+    "gallery/DSC_7079.JPG",
+    "gallery/DSC_7093.JPG",
+    "gallery/DSC_7094.JPG",
+    "gallery/DSC_7166.JPG",
+    "gallery/DSC_7172.JPG",
+    "gallery/DSC_7173.JPG",
+    "gallery/DSC_7186.JPG",
+    "gallery/DSC_7197.JPG",
+    "gallery/DSC_7202.JPG",
+    "gallery/DSC_7214.JPG",
+    "gallery/DSC_7219.JPG"
+  ],
+  "location": {
+    "gr": "1ο ΓΕΛ Κουφαλίων",
+    "en": "1st General High School of Koufalia"
+  },
+  "mapsUrl": "https://maps.app.goo.gl/Q4o8XKCMugMysBTK7"
+}
