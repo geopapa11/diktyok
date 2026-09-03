@@ -1,8 +1,8 @@
 {
   "id": "2025-02-22-annual-assembly",
   "title": {
-    "gr": "Ετήσια Γενική Συνέλευση και Εκλογές",
-    "en": "Annual General Assembly and Board Elections"
+    "gr": "2η Ετήσια Γενική Συνέλευση και Εκλογές",
+    "en": "2nd Annual General Assembly and Board Elections"
   },
   "date": "2025-02-22",
   "year": 2025,
@@ -16,5 +16,10 @@
     "gallery/481766958_532479873194408_3312408731254963296_n.jpg",
     "gallery/482267166_532479793194416_6928037288188775482_n.jpg",
     "gallery/482276676_532479836527745_8203135398217326616_n.jpg"
-  ]
+  ],
+  "location": {
+    "gr": "Αίθουσα Δημοτικού Συμβουλίου, Κουφάλια",
+    "en": "Town Council Chamber, Koufalia"
+  },
+  "mapsUrl": "https://maps.app.goo.gl/2XfMm8cHR1m82Fan6"
 }

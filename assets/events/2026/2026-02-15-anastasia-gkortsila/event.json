@@ -10,5 +10,9 @@
   "descriptionFile": "description.html",
   "gallery": [
     "gallery/630620966_795978813511178_3533505173688601304_n.jpg"
-  ]
+  ],
+  "location": {
+    "gr": "Διαδικτυακή Εκδήλωση",
+    "en": "Online Event"
+  }
 }
