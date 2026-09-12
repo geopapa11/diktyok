@@ -1125,6 +1125,9 @@ p {
     color: var(--color-text-light);
 }
 
+.event-card__online-link {
+    margin-top: 0.35rem;
+}
 
 /* ============================================
    Modals
@@ -1245,7 +1248,7 @@ p {
         flex-direction: column-reverse;
         gap: var(--space-md);
     }
-    
+
     .modal__header-img {
         flex: none;
         max-width: 100%;

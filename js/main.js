@@ -202,7 +202,7 @@
         const day = date.getDate();
         const monthIndex = date.getMonth();
         const year = date.getFullYear();
-        
+
         return `
             <div class="event-card__date">
                 <span class="event-card__day">${day}</span>
@@ -218,18 +218,29 @@
     // Helper to create location HTML
     function createLocationHTML(event) {
         if (!event.location && !event.mapsUrl) return '';
-        
+
         const locationText = event.location ? `
             <span data-lang="gr">${event.location.gr || ''}</span>
             <span data-lang="en">${event.location.en || ''}</span>
         ` : 'Koufalia, Thessaloniki';
-        
+
         const mapsUrl = event.mapsUrl || 'https://maps.google.com/?q=Koufalia,+Thessaloniki,+Greece';
-        
+
         return `
             <a href="${mapsUrl}" target="_blank" rel="noopener" class="event-card__location">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 ${locationText}
+            </a>
+        `;
+    }
+
+    function createOnlineLinkHTML(event) {
+        if (!event.onlineLink || isUpcoming(event) === false) return '';
+        return `
+            <a href="${event.onlineLink}" target="_blank" rel="noopener" class="event-card__location event-card__online-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                <span data-lang="gr">Παρακολουθήστε και διαδικτυακά</span>
+                <span data-lang="en">Οnline access available</span>
             </a>
         `;
     }
@@ -318,22 +329,22 @@
     function renderEventCard(event) {
         const isUpcomingEvent = isUpcoming(event);
         const yearDisplay = isUpcomingEvent ? 'upcoming' : String(event.year);
-        
+
         // Build gallery data attributes - use the full event path which includes year folder
         const eventBasePath = `assets/events/${event.path}`;
-        const galleryPath = event.gallery && event.gallery.length > 0 
-            ? `${eventBasePath}/gallery/` 
+        const galleryPath = event.gallery && event.gallery.length > 0
+            ? `${eventBasePath}/gallery/`
             : null;
         const galleryImages = event.gallery ? event.gallery.map(img => img.replace('gallery/', '')).join(', ') : '';
         const thumbPath = event.thumb ? `${eventBasePath}/${event.thumb}` : null;
-        
+
         // Description container
         const descHtml = event.descriptionHtml ? `
             <div class="event-card__description-full">
                 ${event.descriptionHtml}
             </div>
         ` : '';
-        
+
         // Upcoming tag
         const upcomingTag = isUpcomingEvent ? `
             <span class="event-card__tag upcoming">
@@ -341,12 +352,12 @@
                 <span data-lang="en">Upcoming</span>
             </span>
         ` : '';
-        
+
         const cardHtml = `
-            <div class="event-card reveal" 
-                 data-year="${yearDisplay}" 
-                 data-gallery="${galleryPath || ''}" 
-                 data-gallery-images="${galleryImages}" 
+            <div class="event-card reveal"
+                 data-year="${yearDisplay}"
+                 data-gallery="${galleryPath || ''}"
+                 data-gallery-images="${galleryImages}"
                  data-thumb="${thumbPath || ''}"
                  data-event-id="${event.id}">
                 ${createDateHTML(event)}
@@ -357,6 +368,7 @@
                         <span data-lang="en">${event.title.en}</span>
                     </h3>
                     ${createLocationHTML(event)}
+                    ${createOnlineLinkHTML(event)}
                     ${descHtml}
                     <div class="event-card__more">
                         <span data-lang="gr">Διαβάστε περισσότερα</span>
@@ -366,7 +378,7 @@
                 </div>
             </div>
         `;
-        
+
         return cardHtml;
     }
 
@@ -380,7 +392,7 @@
                 return;
             }
             const eventPaths = await indexResponse.json();
-            
+
             // Fetch all event.json files in parallel
             const eventPromises = eventPaths.map(async (path) => {
                 try {
@@ -399,9 +411,9 @@
                     return null;
                 }
             });
-            
+
             const eventResults = await Promise.all(eventPromises);
-            
+
             // Filter out nulls (failed fetches) and build events array
             const events = eventResults
                 .filter(result => result !== null)
@@ -418,19 +430,20 @@
                         descriptionHtml: null, // Will be loaded on demand
                         descriptionFile: eventData.descriptionFile,
                         location: eventData.location,
-                        mapsUrl: eventData.mapsUrl
+                        mapsUrl: eventData.mapsUrl,
+                        onlineLink: eventData.onlineLink
                     };
                 });
-            
+
             // Sort by date descending (most recent first)
             events.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
+
             allEvents = events;
             currentFilter = 'all';
             visibleEventsCount = INITIAL_EVENTS_COUNT;
             renderVisibleEvents();
             setupEventListeners();
-            
+
         } catch (error) {
             console.error('Failed to load events:', error);
         }
@@ -442,20 +455,20 @@
         filters.forEach(filter => {
             filter.addEventListener('click', () => {
                 const target = filter.dataset.filter;
-                
+
                 // Update active filter state
                 filters.forEach(f => f.classList.remove('active'));
                 filter.classList.add('active');
-                
+
                 // Reset pagination when filter changes
                 currentFilter = target;
                 visibleEventsCount = INITIAL_EVENTS_COUNT;
-                
+
                 // Re-render with new filter
                 renderVisibleEvents();
             });
         });
-        
+
         // Modal open functionality - using event delegation
         eventsContainer.addEventListener('click', (e) => {
             const moreBtn = e.target.closest('.event-card__more');
@@ -519,7 +532,7 @@
         // Get event ID from data attribute
         const eventId = card.dataset.eventId;
         const event = allEvents.find(e => e.id === eventId);
-        
+
         if (!event) {
             console.error('Event not found:', eventId);
             return;
@@ -532,16 +545,16 @@
         const year = date.getFullYear();
         const lang = getCurrentLang();
         const monthName = lang === 'en' ? monthNames.en[monthIndex] : monthNames.gr[monthIndex];
-        
+
         const dateHtml = `
             <span class="event-card__day">${day}</span>
             <span class="event-card__month">${monthName}</span>
             <span class="event-card__year">${year}</span>
         `;
-        
+
         modalDate.innerHTML = dateHtml;
         modalTitle.innerHTML = lang === 'en' ? event.title.en : event.title.gr;
-        
+
         // Set loading state for description
         modalBody.innerHTML = `
             <p>
@@ -556,12 +569,12 @@
                 modalBody.innerHTML = event.descriptionHtml;
                 return;
             }
-            
+
             if (!event.descriptionFile) {
                 modalBody.innerHTML = '';
                 return;
             }
-            
+
             try {
                 const descResponse = await fetch(`assets/events/${event.path}/${event.descriptionFile}`);
                 if (descResponse.ok) {
@@ -576,7 +589,7 @@
                 modalBody.innerHTML = '';
             }
         }
-        
+
         loadDescription();
 
         // Load Thumbnail
@@ -587,7 +600,7 @@
             thumbImg.src = encodeURI(thumbPath);
             thumbImg.alt = 'Event thumbnail';
             thumbImg.style.cursor = 'pointer';
-            
+
             // Allow clicking thumbnail to open in lightbox
             thumbImg.addEventListener('click', () => {
                 const prevGallery = [...currentGalleryImages];
@@ -628,10 +641,10 @@
             modalGallery.style.display = 'none';
             return;
         }
-        
+
         const galleryPath = `assets/events/${event.path}/`;
         let foundAny = false;
-        
+
         galleryGrid.innerHTML = '';
         currentGalleryImages = [];
 
@@ -656,9 +669,9 @@
             }
 
             item.appendChild(img);
-            
+
             item.addEventListener('click', () => openLightbox(index));
-            
+
             galleryGrid.appendChild(item);
             foundAny = true;
         });
@@ -710,24 +723,24 @@
         // Show spinner
         lightboxSpinner.style.display = 'block';
         lightboxImg.classList.remove('lightbox__img--loaded');
-        
+
         // Check if image is already cached and is the same source
         if (lightboxImg.complete && lightboxImg.src === src) {
             lightboxSpinner.style.display = 'none';
             lightboxImg.classList.add('lightbox__img--loaded');
             return;
         }
-        
+
         // Remove any existing onload handler to avoid duplicates
         lightboxImg.onload = null;
-        
+
         lightboxImg.src = src;
-        
+
         const onLoad = () => {
             lightboxSpinner.style.display = 'none';
             lightboxImg.classList.add('lightbox__img--loaded');
         };
-        
+
         if (lightboxImg.complete) {
             onLoad();
         } else {
@@ -737,25 +750,25 @@
 
     function openLightbox(index) {
         currentImageIndex = index;
-        
+
         // Show navigation only if there's more than one image
         const hasMultiple = currentGalleryImages.length > 1;
         lightboxPrev.style.display = hasMultiple ? 'flex' : 'none';
         lightboxNext.style.display = hasMultiple ? 'flex' : 'none';
-        
+
         // Load the image with spinner
         loadLightboxImage(currentGalleryImages[currentImageIndex]);
-        
+
         // Preload adjacent images
         preloadAdjacentImages();
-        
+
         lightbox.classList.add('open');
     }
 
     function closeLightbox() {
         lightbox.classList.remove('open');
         lightboxSpinner.style.display = 'none';
-        setTimeout(() => { 
+        setTimeout(() => {
             lightboxImg.src = '';
             lightboxImg.classList.remove('lightbox__img--loaded');
         }, 300);
