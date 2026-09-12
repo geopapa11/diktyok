@@ -1125,6 +1125,9 @@ p {
     color: var(--color-text-light);
 }
 
+.event-card__online-link {
+    margin-top: 0.35rem;
+}
 
 /* ============================================
    Modals
@@ -1245,7 +1248,7 @@ p {
         flex-direction: column-reverse;
         gap: var(--space-md);
     }
-    
+
     .modal__header-img {
         flex: none;
         max-width: 100%;
@@ -1772,6 +1775,7 @@ body:not(.lang-en) .modal__body [data-lang="gr"] {
 
 .events__pagination .btn {
     flex: 0 0 auto;
+    display: none;
 }
 
 /* ============================================
