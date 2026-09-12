@@ -1772,6 +1772,7 @@ body:not(.lang-en) .modal__body [data-lang="gr"] {
 
 .events__pagination .btn {
     flex: 0 0 auto;
+    display: none;
 }
 
 /* ============================================
